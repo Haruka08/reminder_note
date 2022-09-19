@@ -14,6 +14,7 @@ const app = express();
 // to convert client side data to be parsed to JSON
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(express.static("public"));
 
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, './public/index.html'))
@@ -26,9 +27,17 @@ app.get('/notes', (req, res) => {
 // read db.json
 app.get('/api/notes', (req, res) => {
     console.info(req.body);
-    const notes = req.body;
-    return res.json(notes);
-    });
+
+      fs.readFile('./db/db.json', 'utf8', (err, data) => {
+        if (err) {
+          console.error(err);
+        } else {
+          // Convert string into JSON object
+          const parsedNote = JSON.parse(data);
+    return res.json(parsedNote)}
+
+        })
+  });
 
 // write the new note to db.json
 app.post('/api/notes', (req, res) => {
@@ -43,7 +52,7 @@ app.post('/api/notes', (req, res) => {
         note_id: uuid(),
       };
   
-      // Obtain existing reviews
+      // Obtain existing note
       fs.readFile('./db/db.json', 'utf8', (err, data) => {
         if (err) {
           console.error(err);
@@ -51,10 +60,10 @@ app.post('/api/notes', (req, res) => {
           // Convert string into JSON object
           const parsedNote = JSON.parse(data);
   
-          // Add a new review
+          // Add a new note
           parsedNote.push(newNote);
   
-          // Write updated reviews back to the file
+          // Write updated note back to the file
           fs.writeFile(
             './db/db.json',
             JSON.stringify(parsedNote, null, 4),
@@ -73,8 +82,6 @@ app.post('/api/notes', (req, res) => {
   
       console.log(response);
       res.status(201).json(response);
-      const htmlPageContent = updateHTML(response);
-
     } else {
       res.status(500).json('Error in posting review');
     }
